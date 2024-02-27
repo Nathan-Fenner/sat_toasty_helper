@@ -135,10 +135,13 @@ impl<P: InternalProp> InternalProp for VarOrProp<P> {
 
 /// Implement this trait for your types to allow them as propositions
 /// in your SAT constraints.
-pub trait Prop: Clone + Eq + Ord + Any {}
+pub trait Prop: Clone + Eq + Ord + Any {
+    fn validate(&self) {}
+}
 
 impl<P: Prop> InternalProp for P {
     fn add_to_prop_map(self, solver: &mut Solver) -> Var {
+        self.validate();
         // Look up this value in the solver's map.
         // If not present, insert it with a new `Var` index.
         // Otherwise, return the existing value.
