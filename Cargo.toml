@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "sat_toasty_helper"
+path = "src/lib.rs"
 
 [dependencies]
 splr = "0.17.0"

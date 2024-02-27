@@ -5,7 +5,7 @@ use std::{
 
 /// A `Var` is an opaque identifier used for variables.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord, Debug)]
-pub struct Var(i32);
+pub struct Var(pub i32);
 
 // A `Lit` is a positive or negative variable.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord, Debug)]
@@ -16,7 +16,7 @@ pub enum Lit<Item: InternalProp> {
 
 impl Lit<Var> {
     /// Returns the dimacs value (positive/negative integer).
-    fn dimacs_int(self) -> i32 {
+    pub fn dimacs_int(self) -> i32 {
         match self {
             Self::Pos(v) => v.0,
             Self::Neg(v) => -v.0,
@@ -26,7 +26,7 @@ impl Lit<Var> {
 
 impl<A: InternalProp> Lit<A> {
     /// Maps the function `f` over literal `self`, preserving `Pos`/`Neg`.
-    fn map<B: InternalProp>(self, f: impl FnOnce(A) -> B) -> Lit<B> {
+    pub fn map<B: InternalProp>(self, f: impl FnOnce(A) -> B) -> Lit<B> {
         match self {
             Lit::Pos(v) => Lit::Pos(f(v)),
             Lit::Neg(v) => Lit::Neg(f(v)),
@@ -34,7 +34,7 @@ impl<A: InternalProp> Lit<A> {
     }
 
     /// Negates the literal, replacing `Pos` with `Neg` and vice-versa.
-    fn opposite(self) -> Self {
+    pub fn opposite(self) -> Self {
         match self {
             Lit::Pos(v) => Lit::Neg(v),
             Lit::Neg(v) => Lit::Pos(v),
@@ -67,7 +67,7 @@ pub trait DefinedProp: Ord + Eq + Clone + Any {
 }
 
 #[derive(Copy, Clone, Eq, Ord, PartialEq, PartialOrd, Hash, Debug)]
-pub struct Defined<P: DefinedProp>(P);
+pub struct Defined<P: DefinedProp>(pub P);
 
 impl<P: DefinedProp> InternalProp for Defined<P> {
     fn add_to_prop_map(self, solver: &mut Solver) -> Var {
@@ -461,7 +461,7 @@ impl DefinedProp for AtMostOne {
     }
 }
 
-// This type is used for generic auxiliary variables, if you need them.
+// This type is used for generic auxiliary variables.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 struct Helper(Var, &'static str, usize);
 impl Prop for Helper {}
@@ -491,3 +491,5 @@ impl Solver {
         }
     }
 }
+
+
