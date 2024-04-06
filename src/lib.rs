@@ -1,6 +1,7 @@
 use std::{
     any::{Any, TypeId},
     collections::{BTreeMap, BTreeSet},
+    sync::{Arc, Mutex},
 };
 
 /// A `Var` is an opaque identifier used for variables.
@@ -84,8 +85,10 @@ impl<P: DefinedProp> InternalProp for Defined<P> {
             .entry(type_id)
             .or_insert_with(|| {
                 let new_map: BTreeMap<P, Var> = BTreeMap::new();
-                Box::new(new_map)
+                Arc::new(Mutex::new(new_map))
             })
+            .lock()
+            .expect("lock is not poisoned")
             .downcast_mut::<BTreeMap<P, Var>>()
             .unwrap()
             .entry(self.0)
@@ -153,8 +156,10 @@ impl<P: Prop> InternalProp for P {
             .entry(type_id)
             .or_insert_with(|| {
                 let new_map: BTreeMap<P, Var> = BTreeMap::new();
-                Box::new(new_map)
+                Arc::new(Mutex::new(new_map))
             })
+            .lock()
+            .expect("lock is not poisoned")
             .downcast_mut::<BTreeMap<P, Var>>()
             .unwrap()
             .entry(self)
@@ -166,7 +171,7 @@ impl<P: Prop> InternalProp for P {
 }
 
 /// A `Solver` is used to build and (and later solve) SAT constraints.
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 pub struct Solver {
     /// A clause is a set of literals; each literal is a positive or negative integer (e.g. 5 or -5).
     /// The number 0 should not appear anywhere in any clause.
@@ -186,10 +191,11 @@ impl Solver {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct PropMap<T> {
     /// This index is used to assign props to numeric entries.
     fresh_index: i32,
-    prop_indexes: BTreeMap<TypeId, Box<dyn Any>>,
+    prop_indexes: BTreeMap<TypeId, Arc<Mutex<dyn Any>>>,
     item_type: std::marker::PhantomData<T>,
 }
 impl<T> Default for PropMap<T> {
@@ -491,5 +497,3 @@ impl Solver {
         }
     }
 }
-
-
